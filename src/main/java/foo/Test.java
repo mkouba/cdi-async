@@ -1,23 +1,32 @@
 package foo;
 
-import javax.enterprise.inject.spi.CDI;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.jboss.weld.environment.se.Weld;
+import org.jboss.weld.environment.se.WeldContainer;
 
 public class Test {
-	public static void main(String[] args) {
-		Weld weld = new Weld();
-		weld.initialize();
 
-		SQLConnectionProducer producer = CDI.current().select(SQLConnectionProducer.class).get();
-		// Get the bean, but the future is not yet resolved, so CDI should not return my bean,
-		// it should return a CompletionStage<MyBean> which I can register on to wait for my bean
-		MyBean bean = CDI.current().select(MyBean.class).get();
-		
-		// The async value only gets resolved after I'm done asking CDI for my bean
-		producer.future.complete(new SQLConnectionImpl("Voila !"));
-		
-		// now I can test it, but I need CDI to tell me my bean is ready
-		bean.test();
-	}
+    public static void main(String[] args) throws InterruptedException {
+
+        try (WeldContainer container = new Weld().initialize()) {
+
+            BlockingQueue<Object> synchronizer = new LinkedBlockingQueue<>();
+
+            // Obtain Instance but the actual bean instance creation happens async
+            AsyncSupport.getAsync(container.select(MyBean.class)).thenAccept((myBean) -> {
+                // MyBean is ready to use
+                myBean.test();
+                synchronizer.add(myBean);
+            });
+
+            System.out.println("Continue with non-blocking code...");
+
+            if (synchronizer.poll(2, TimeUnit.SECONDS) == null) {
+                throw new IllegalStateException("Something bad happened");
+            }
+        }
+    }
 }

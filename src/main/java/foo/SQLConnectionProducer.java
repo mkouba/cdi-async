@@ -1,20 +1,15 @@
 package foo;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
+@ApplicationScoped
 public class SQLConnectionProducer {
-	
-	CompletableFuture<SQLConnection> future;
-	
-	@Produces
-	private CompletionStage<SQLConnection> getSQL(){
-		CompletableFuture<SQLConnection> future = new CompletableFuture<SQLConnection>();
-		// simulate the future being resolved later by saving it and resolving it from the main method
-		// later
-		this.future = future;
-		return future;
-	}
+
+    @Produces
+    private SQLConnection getSQL() throws InterruptedException{
+        // simulate expensive instance creation
+        Thread.sleep(100);
+        return new SQLConnectionImpl("Voila!");
+    }
 }
