@@ -16,6 +16,7 @@ public class Test {
             BlockingQueue<Object> synchronizer = new LinkedBlockingQueue<>();
 
             // Obtain Instance but the actual bean instance creation happens async
+            // Note that container.select() may be also blocking
             AsyncSupport.getAsync(container.select(MyBean.class)).thenAccept((myBean) -> {
                 // MyBean is ready to use
                 myBean.test();
