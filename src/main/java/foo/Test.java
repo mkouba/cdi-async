@@ -11,7 +11,7 @@ public class Test {
 
     public static void main(String[] args) throws InterruptedException {
 
-        try (WeldContainer container = new Weld().initialize()) {
+        try (WeldContainer container = new Weld().addExtension(new AsyncExtension()).initialize()) {
 
             BlockingQueue<Object> synchronizer = new LinkedBlockingQueue<>();
 
@@ -25,7 +25,9 @@ public class Test {
 
             System.out.println("Continue with non-blocking code...");
 
-            if (synchronizer.poll(2, TimeUnit.SECONDS) == null) {
+            SQLConnectionProducer.future.complete(new SQLConnectionImpl("Test!"));
+
+            if (synchronizer.poll(2000, TimeUnit.SECONDS) == null) {
                 throw new IllegalStateException("Something bad happened");
             }
         }
